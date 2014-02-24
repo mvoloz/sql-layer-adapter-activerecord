@@ -62,12 +62,13 @@ Continue with the guide at Step 4.
 ### Migration Helpers
 
 [Table Groups](https://foundationdb.com/layers/sql/GettingStarted/table.groups.html)
-are a unique feature to the SQL Layer and can be managed with this
-adapter through new migration helepr options and methods.
+are a unique feature to the SQL Layer and can be managed with new
+migration options and methods.
 
 > Important:
-> Gropuing is an adapter specific option and, as described in
-> [Types of Scheam Dumps](http://guides.rubyonrails.org/migrations.html#types-of-schema-dumps),
+> 
+> Grouping is an adapter specific option and, as described in
+> [Types of Schema Dumps](http://guides.rubyonrails.org/migrations.html#types-of-schema-dumps),
 > will only be present in `:sql` type schema dumps.
 
 The easiest way is to using the `grouping` option to `references`:
@@ -105,7 +106,7 @@ class GroupPostsToUsers < ActiveRecord::Migration
 end
 ```
 
-If the table already has the reference, `add_gropuing` alone can be used:
+If the table already has the reference, `add_grouping` alone can be used:
 
 ```ruby
 class GroupPostsToUsers < ActiveRecord::Migration
