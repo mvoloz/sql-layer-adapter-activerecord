@@ -176,6 +176,13 @@ module ActiveRecord
           super
         end
 
+        # Patch to add support for grouping option
+        def add_reference(table_name, ref_name, options = {})
+          super
+          grouping_option = options.delete(:grouping)
+          add_grouping(table_name, ref_name) if grouping_option
+        end
+
         def type_to_sql(type, limit = nil, precision = nil, scale = nil)
           case type
           when :integer
@@ -376,6 +383,29 @@ module ActiveRecord
         end
 
 
+        # FDB SPECIFIC METHODS =======================================
+
+        # Migration helpers ==========================================
+
+        # Add +table_name+ as a child of +ref_name+
+        def add_grouping(table_name, ref_name)
+          execute(
+            "ALTER TABLE #{quote_table_name(table_name)} ADD "+
+            FdbSqlHelpers.grouping_sql_clause(self, ref_name),
+            SCHEMA_LOG_NAME
+          )
+        end
+
+        # Remove grouping from +table_name+
+        def remove_grouping(table_name)
+          execute(
+            "ALTER TABLE #{quote_table_name(table_name)} "+
+            "DROP GROUPING FOREIGN KEY",
+            SCHEMA_LOG_NAME
+          )
+        end
+
+
         private
 
           SCHEMA_LOG_NAME = 'FDB_SCHEMA'
@@ -388,12 +418,31 @@ module ActiveRecord
             :float        => { :name => "float" },
             :decimal      => { :name => "decimal" },
             :datetime     => { :name => "datetime" },
-            :timestamp    => { :name => "timestamp" }, # NB: Alias for DATETIME as of 1.9.2
+            :timestamp    => { :name => "timestamp" },
             :time         => { :name => "time" },
             :date         => { :name => "date" },
             :binary       => { :name => "blob" },
             :boolean      => { :name => "boolean" }
           }
+
+
+          if ActiveRecord::VERSION::MAJOR < 4
+
+            def table_definition
+              FdbSqlTableDefinition.new self
+            end
+
+          else
+
+            def create_table_definition(name, temporary, options)
+              FdbSqlTableDefinition.new native_database_types, name, temporary, options
+            end
+
+            def update_table_definition(table_name, base)
+              Table.new(table_name, base)
+            end
+
+          end
 
       end
 

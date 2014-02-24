@@ -7,9 +7,12 @@ require 'arel/visitors/bind_visitor'
 require 'active_record/connection_adapters/fdbsql/column'
 require 'active_record/connection_adapters/fdbsql/database_limits'
 require 'active_record/connection_adapters/fdbsql/database_statements'
+require 'active_record/connection_adapters/fdbsql/helpers'
 require 'active_record/connection_adapters/fdbsql/quoting'
 require 'active_record/connection_adapters/fdbsql/schema_statements'
 require 'active_record/connection_adapters/fdbsql/statement_pool'
+require 'active_record/connection_adapters/fdbsql/table'
+require 'active_record/connection_adapters/fdbsql/table_definition'
 require 'active_record/connection_adapters/fdbsql/typeid'
 
 if ActiveRecord::VERSION::MAJOR >= 4
