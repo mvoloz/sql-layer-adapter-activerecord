@@ -176,11 +176,13 @@ module ActiveRecord
           super
         end
 
-        # Patch to add support for grouping option
-        def add_reference(table_name, ref_name, options = {})
-          super
-          grouping_option = options.delete(:grouping)
-          add_grouping(table_name, ref_name) if grouping_option
+        if ActiveRecord::VERSION::MAJOR >= 4
+          # Patch to add support for grouping option
+          def add_reference(table_name, ref_name, options = {})
+            super
+            grouping_option = options.delete(:grouping)
+            add_grouping(table_name, ref_name) if grouping_option
+          end
         end
 
         def type_to_sql(type, limit = nil, precision = nil, scale = nil)

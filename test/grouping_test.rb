@@ -38,9 +38,22 @@ class CreateOrdersGrouped < ActiveRecord::Migration
   end
 end
 
+class ChangeOrdersAddReference < ActiveRecord::Migration
+  def up
+    change_table :orders do |t|
+      t.references :customers
+    end
+  end
+
+  def down
+    change_table :orders do |t|
+      t.remove_references :customers
+    end
+  end
+end
+
 class AddOrdersGrouping < ActiveRecord::Migration
   def up
-    add_reference :orders, :customers
     add_grouping :orders, :customers
   end
 
@@ -49,7 +62,7 @@ class AddOrdersGrouping < ActiveRecord::Migration
   end
 end
 
-class ChangeOrdersAddReferences < ActiveRecord::Migration
+class ChangeOrdersAddReferenceGrouping < ActiveRecord::Migration
   def up
     change_table :orders do |t|
       t.references :customers, grouping: true
@@ -66,7 +79,6 @@ end
 class ChangeOrdersAddGrouping < ActiveRecord::Migration
   def up
     change_table :orders do |t|
-      t.references :customers
       t.add_grouping :customers
     end
   end
@@ -74,7 +86,6 @@ class ChangeOrdersAddGrouping < ActiveRecord::Migration
   def down
     change_table :orders do |t|
       t.remove_grouping
-      t.remove_references :customers
     end
   end
 end
@@ -83,14 +94,8 @@ class ChangeOrdersAddGroupingNewStyle < ActiveRecord::Migration
   def change
     change_table :orders do |t|
       reversible do |dir|
-        dir.up    {
-          t.references :customers
-          t.add_grouping :customers
-        }
-        dir.down  {
-          t.remove_grouping
-          t.remove_references :customers
-        }
+        dir.up    { t.add_grouping :customers }
+        dir.down  { t.remove_grouping }
       end
     end
   end
@@ -155,6 +160,7 @@ class GroupingTest < Test::Unit::TestCase
 
   def test_add_grouping
     create_ungrouped
+    ChangeOrdersAddReference.new.up
     AddOrdersGrouping.new.up
     expect_grouped
   end
@@ -165,20 +171,21 @@ class GroupingTest < Test::Unit::TestCase
     expect_ungrouped
   end
 
-  def test_change_orders_add_references
+  def test_change_orders_add_reference_grouping
     create_ungrouped
-    ChangeOrdersAddReferences.new.up
+    ChangeOrdersAddReferenceGrouping.new.up
     expect_grouped
   end
 
-  def test_change_orders_remove_references
+  def test_change_orders_remove_reference_grouping
     create_grouped
-    ChangeOrdersAddReferences.new.down
+    ChangeOrdersAddReferenceGrouping.new.down
     expect_ungrouped
   end
 
   def test_change_orders_add_grouping
     create_ungrouped
+    ChangeOrdersAddReference.new.up
     ChangeOrdersAddGrouping.new.up
     expect_grouped
   end
@@ -192,6 +199,7 @@ class GroupingTest < Test::Unit::TestCase
   def test_change_orders_add_grouping_new_style
     return skip "new style migrations require Rails 4" unless ActiveRecord::VERSION::MAJOR >= 4
     create_ungrouped
+    ChangeOrdersAddReference.new.up
     ChangeOrdersAddGroupingNewStyle.migrate :up
     expect_grouped
   end
