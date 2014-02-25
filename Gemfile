@@ -10,7 +10,10 @@ else
     spec = eval(File.read('activerecord-fdbsql-adapter.gemspec'))
     r = spec.dependencies.detect{ |d|d.name == 'activerecord' }.requirement
     uri = URI.parse "http://rubygems.org/api/v1/versions/activerecord.yaml"
-    latest = YAML.load(Net::HTTP.get(uri)).find { |d| r.satisfied_by? Gem::Version.create d['number'] }
+    # Load all rails gem info, reverse sort, find the first (i.e. newest) that satisfies the req
+    latest = YAML.load(Net::HTTP.get(uri))
+      .sort { |a,b| b['number'] <=> a['number'] }
+      .find { |d| r.satisfied_by? Gem::Version.create d['number'] }
     latest['number']
   end
   gem 'rails', :git => "git://github.com/rails/rails.git", :tag => "v#{version}"

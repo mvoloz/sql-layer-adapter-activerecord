@@ -58,6 +58,87 @@ Follow the guide through Step 3.2 and then, before step 4, perform the steps bel
 
 Continue with the guide at Step 4.
 
+
+### Migration Helpers
+
+[Table Groups](https://foundationdb.com/layers/sql/GettingStarted/table.groups.html)
+are a unique feature to the SQL Layer and can be managed with new
+migration options and methods.
+
+> Important:
+> 
+> Grouping is an adapter specific option and, as described in
+> [Types of Schema Dumps](http://guides.rubyonrails.org/migrations.html#types-of-schema-dumps),
+> will only be present in `:sql` type schema dumps.
+
+The easiest way is to using the `grouping` option to `references`:
+
+```ruby
+class CreatePosts < ActiveRecord::Migration
+  def up
+    create_table :posts do |t|
+      t.name :string
+      t.references :users, grouping: true
+    end
+  end
+
+  def down
+    drop_table :posts
+  end
+end
+```
+
+The option is also available during `change_table`:
+
+```ruby
+class GroupPostsToUsers < ActiveRecord::Migration
+  def up
+    change_table :posts do |t|
+      t.references :users, grouping: true
+    end
+  end
+
+  def down
+    change_table :posts do |t|
+      t.remove_references :users
+    end
+  end
+end
+```
+
+If the table already has the reference, `add_grouping` alone can be used:
+
+```ruby
+class GroupPostsToUsers < ActiveRecord::Migration
+  def up
+    change_table :posts do |t|
+      t.add_grouping :posts
+    end
+  end
+
+  def down
+    change_table :posts do |t|
+      t.remove_grouping
+    end
+  end
+end
+```
+
+Lastly, a global helper is also available:
+
+```ruby
+class GroupPostsToUsers < ActiveRecord::Migration
+  def up
+    add_grouping :users, :posts
+  end
+
+  def down
+    remove_grouping :users
+  end
+end
+```
+
+
 ### Contributing
 
 1. Fork
