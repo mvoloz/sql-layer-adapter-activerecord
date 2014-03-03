@@ -27,6 +27,12 @@ Support for v4.1 will be available shortly after it is released as stable.
 
 ### Quick Start
 
+> Important:
+> 
+> The [SQL Layer](https://foundationdb.com/layers/sql/) installed and running
+> before attempting to use this adapter.
+> 
+
 1. Add to `Gemfile`
 2. Install
 3. Update configuration
