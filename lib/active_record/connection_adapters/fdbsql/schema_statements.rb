@@ -407,6 +407,14 @@ module ActiveRecord
           )
         end
 
+        if ActiveRecord::VERSION::MAJOR >= 4
+
+          def update_table_definition(table_name, base)
+            Table.new(table_name, base)
+          end
+
+        end
+
 
         private
 
@@ -438,10 +446,6 @@ module ActiveRecord
 
             def create_table_definition(name, temporary, options)
               FdbSqlTableDefinition.new native_database_types, name, temporary, options
-            end
-
-            def update_table_definition(table_name, base)
-              Table.new(table_name, base)
             end
 
           end

@@ -29,7 +29,7 @@ class CreateOrdersGrouped < ActiveRecord::Migration
   def up
     create_table :orders do |t|
       t.date :odate
-      t.references :customers, grouping: true
+      t.references :customer, grouping: true
     end
   end
 
@@ -41,20 +41,20 @@ end
 class ChangeOrdersAddReference < ActiveRecord::Migration
   def up
     change_table :orders do |t|
-      t.references :customers
+      t.references :customer
     end
   end
 
   def down
     change_table :orders do |t|
-      t.remove_references :customers
+      t.remove_references :customer
     end
   end
 end
 
 class AddOrdersGrouping < ActiveRecord::Migration
   def up
-    add_grouping :orders, :customers
+    add_grouping :orders, :customer
   end
 
   def down
@@ -65,13 +65,13 @@ end
 class ChangeOrdersAddReferenceGrouping < ActiveRecord::Migration
   def up
     change_table :orders do |t|
-      t.references :customers, grouping: true
+      t.references :customer, grouping: true
     end
   end
 
   def down
     change_table :orders do |t|
-      t.remove_references :customers
+      t.remove_references :customer
     end
   end
 end
@@ -79,7 +79,7 @@ end
 class ChangeOrdersAddGrouping < ActiveRecord::Migration
   def up
     change_table :orders do |t|
-      t.add_grouping :customers
+      t.add_grouping :customer
     end
   end
 
@@ -94,7 +94,7 @@ class ChangeOrdersAddGroupingNewStyle < ActiveRecord::Migration
   def change
     change_table :orders do |t|
       reversible do |dir|
-        dir.up    { t.add_grouping :customers }
+        dir.up    { t.add_grouping :customer }
         dir.down  { t.remove_grouping }
       end
     end
