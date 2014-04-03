@@ -171,6 +171,12 @@ module ActiveRecord
         false
       end
 
+      if ActiveRecord::VERSION::MAJOR >= 4 && (ActiveRecord::VERSION::MINOR > 0 || ActiveRecord::VERSION::TINY >= 4)
+        def active_threadsafe?
+          @connection.connect_poll != PG::PGRES_POLLING_FAILED
+        end
+      end
+
       def reconnect!
         super
         clear_cache!

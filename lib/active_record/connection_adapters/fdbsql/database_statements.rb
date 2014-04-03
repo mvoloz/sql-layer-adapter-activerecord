@@ -8,8 +8,14 @@ module ActiveRecord
 
         # Returns an array of arrays containing the field values
         # Order is the same as that returned by +columns+
-        def select_rows(sql, name = 'SQL')
-          select_raw(sql, name).last
+        if ActiveRecord::VERSION::MAJOR >= 4 && (ActiveRecord::VERSION::MINOR > 0 || ActiveRecord::VERSION::TINY >= 4)
+          def select_rows(sql, name = 'SQL', binds = [])
+            exec_query(sql, name, binds).rows
+          end
+        else
+          def select_rows(sql, name = 'SQL')
+            select_raw(sql, name).last
+          end
         end
 
         # Executes the SQL statement in the context of this connection.

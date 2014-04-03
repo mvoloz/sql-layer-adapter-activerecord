@@ -371,13 +371,19 @@ module ActiveRecord
             )
 
             if result.length == 1
-              # The COMMIT; BEGIN; can go away when 1) transactional DDL is available 2) There is a better restart/set function
-              execute(
-                "COMMIT; "+
-                "CALL sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]}); "+
-                "BEGIN;",
-                SCHEMA_LOG_NAME
-              )
+              if @sql_layer_version < 10904
+                execute(
+                  "COMMIT; "+
+                  "CALL sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]}); "+
+                  "BEGIN;",
+                  SCHEMA_LOG_NAME
+                )
+              else
+                execute(
+                  "SELECT sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]})",
+                  SCHEMA_LOG_NAME
+                )
+              end
             else
               @logger.warn "Unable to determin max value for #{table_name}.#{primary_key}" if @logger
             end
@@ -408,11 +414,10 @@ module ActiveRecord
         end
 
         if ActiveRecord::VERSION::MAJOR >= 4
-
+          # Added as private in 4.0.0, moved to public in 4.0.4
           def update_table_definition(table_name, base)
             Table.new(table_name, base)
           end
-
         end
 
 
@@ -437,17 +442,13 @@ module ActiveRecord
 
 
           if ActiveRecord::VERSION::MAJOR < 4
-
             def table_definition
               FdbSqlTableDefinition.new self
             end
-
           else
-
             def create_table_definition(name, temporary, options)
               FdbSqlTableDefinition.new native_database_types, name, temporary, options
             end
-
           end
 
       end
