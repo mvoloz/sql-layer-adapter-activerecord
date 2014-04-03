@@ -46,7 +46,7 @@ Follow the guide through Step 3.2 and then, before step 4, perform the steps bel
 
 1. Add *one* the following lines to `Gemfile`:
     - Latest stable release:
-        - `gem 'activerecord-fdbsql-adapter', '~> 1.0.0'`
+        - `gem 'activerecord-fdbsql-adapter', '~> 1.1.0'`
     - Unreleased development version:
         - `gem 'activerecord-fdbsql-adapter', github: 'FoundationDB/sql-layer-adapter-activerecord'`
 2. Install the new gem
@@ -165,7 +165,7 @@ the `test/RUNNING_UNIT_TESTS.md` file for more details.
 ### License
 
 The MIT License (MIT)  
-Copyright (c) 2012-2014 FoundationDB, LLC  
+Copyright (c) 2013-2014 FoundationDB, LLC  
 It is free software and may be redistributed under the terms specified
 in the LICENSE file.
 
