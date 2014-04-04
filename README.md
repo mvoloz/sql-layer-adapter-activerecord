@@ -84,7 +84,7 @@ class CreatePosts < ActiveRecord::Migration
   def up
     create_table :posts do |t|
       t.name :string
-      t.references :users, grouping: true
+      t.references :user, grouping: true
     end
   end
 
@@ -100,13 +100,13 @@ The option is also available during `change_table`:
 class GroupPostsToUsers < ActiveRecord::Migration
   def up
     change_table :posts do |t|
-      t.references :users, grouping: true
+      t.references :user, grouping: true
     end
   end
 
   def down
     change_table :posts do |t|
-      t.remove_references :users
+      t.remove_references :user
     end
   end
 end
@@ -118,13 +118,13 @@ If the table already has the reference, `add_grouping` alone can be used:
 class GroupPostsToUsers < ActiveRecord::Migration
   def up
     change_table :posts do |t|
-      t.add_grouping :posts
+      t.add_grouping :user
     end
   end
 
   def down
     change_table :posts do |t|
-      t.remove_grouping
+      t.remove_grouping :user
     end
   end
 end
@@ -135,11 +135,11 @@ Lastly, a global helper is also available:
 ```ruby
 class GroupPostsToUsers < ActiveRecord::Migration
   def up
-    add_grouping :users, :posts
+    add_grouping :posts, :user
   end
 
   def down
-    remove_grouping :users
+    remove_grouping :posts, :user
   end
 end
 ```
