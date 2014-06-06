@@ -2,7 +2,7 @@ require 'rake'
 require 'rake/clean'
 require 'rake/testtask'
 
-CLEAN.include ["activereocrd-*.gem", '**/*.rbc']
+CLEAN.include ["activerecord-*.gem", '**/*.rbc']
 AR_PATH = Gem.loaded_specs['activerecord'].full_gem_path
 
 
