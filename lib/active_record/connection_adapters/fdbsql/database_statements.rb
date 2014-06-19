@@ -143,6 +143,7 @@ module ActiveRecord
 
           # Returns an array of record hashes with the column names as keys and
           # column values as values.
+          # As of 4.1.0: Returns an ActiveRecord::Result instance.
           def select(sql, name = nil, binds = [])
             ret = exec_query(sql, name, binds)
             ActiveRecord::VERSION::MAJOR >= 4 ? ret : ret.to_a

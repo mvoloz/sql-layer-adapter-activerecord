@@ -67,7 +67,8 @@ module ActiveRecord
         # Array of GroupingDefinitions
         attr_accessor :groupings
 
-        def initialize(types, name, temporary, options)
+        # NB: as added in 4.1.0
+        def initialize(types, name, temporary, options, as = nil)
           super
           @groupings = []
         end

@@ -469,8 +469,9 @@ module ActiveRecord
               FdbSqlTableDefinition.new self
             end
           else
-            def create_table_definition(name, temporary, options)
-              FdbSqlTableDefinition.new native_database_types, name, temporary, options
+            # as added in 4.1
+            def create_table_definition(name, temporary, options, as = nil)
+              FdbSqlTableDefinition.new native_database_types, name, temporary, options, as
             end
           end
 
