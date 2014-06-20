@@ -199,6 +199,8 @@ module ActiveRecord
           super
         end
 
+        # TODO: implement def index_name_exists?() ?
+
         if ActiveRecord::VERSION::MAJOR >= 4
           # Patch to add support for grouping option
           def add_reference(table_name, ref_name, options = {})
@@ -258,7 +260,7 @@ module ActiveRecord
           # FDB SQL requires order columns appear in the SELECT.
           def columns_for_distinct(columns, orders)
             # Lifted from the default Postgres implementation
-            order_columns = orders.map{ |s|
+            order_columns = orders.reject(&:blank?).map{ |s|
                 # Convert Arel node to string
                 s = s.to_sql unless s.is_a?(String)
                 # Remove any ASC/DESC modifiers

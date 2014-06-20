@@ -32,52 +32,46 @@ module ActiveRecord
         # Returns an array of arrays containing the field values
         # Order is the same as that returned by +columns+
         if ActiveRecord::VERSION::MAJOR >= 4 && (ActiveRecord::VERSION::MINOR > 0 || ActiveRecord::VERSION::TINY >= 4)
-          def select_rows(sql, name = 'SQL', binds = [])
+          def select_rows(sql, name = nil, binds = [])
             exec_query(sql, name, binds).rows
           end
         else
-          def select_rows(sql, name = 'SQL')
+          def select_rows(sql, name = nil, binds=[])
             select_raw(sql, name).last
           end
         end
 
         # Executes the SQL statement in the context of this connection.
-        def execute(sql, name = 'SQL')
-          log(sql, name) do
-            @connection.async_exec(sql)
-          end
+        def execute(sql, name = nil)
+          exec_no_cache(sql, name, nil)
         end
 
         # Executes +sql+ statement in the context of this connection using
         # +binds+ as the bind substitutes. +name+ is logged along with
         # the executed +sql+ statement.
-        def exec_query(sql, name = 'SQL', binds = [])
-          log(sql, name, binds) do
-            result = without_prepared_statement?(binds) ? exec_no_cache(sql) :
-                                                          exec_cache(sql, binds)
-            result_array = result_as_array(result)
-            if ActiveRecord::VERSION::MAJOR >= 4
-              column_types = compute_field_types(result)
-              ret = ActiveRecord::Result.new(result.fields, result_array, column_types)
-            else
-              ret = ActiveRecord::Result.new(result.fields, result_array)
-            end
-            result.clear
-            ret
+        def exec_query(sql, name = nil, binds = [])
+          result = without_prepared_statement?(binds) ? exec_no_cache(sql, name, binds) :
+                                                        exec_cache(sql, name, binds)
+          result_array = result_as_array(result)
+          if ActiveRecord::VERSION::MAJOR >= 4
+            column_types = compute_field_types(result)
+            ret = ActiveRecord::Result.new(result.fields, result_array, column_types)
+          else
+            ret = ActiveRecord::Result.new(result.fields, result_array)
           end
+          result.clear
+          ret
         end
 
         # Executes delete +sql+ statement in the context of this connection using
         # +binds+ as the bind substitutes. +name+ is the logged along with
         # the executed +sql+ statement.
-        def exec_delete(sql, name = 'SQL', binds = [])
-          log(sql, name, binds) do
-            result = without_prepared_statement?(binds) ? exec_no_cache(sql) :
-                                                          exec_cache(sql, binds)
-            affected = result.cmd_tuples
-            result.clear
-            affected
-          end
+        def exec_delete(sql, name = nil, binds = [])
+          result = without_prepared_statement?(binds) ? exec_no_cache(sql, name, binds) :
+                                                        exec_cache(sql, name, binds)
+          affected = result.cmd_tuples
+          result.clear
+          affected
         end
         alias :exec_update :exec_delete
 
@@ -177,23 +171,27 @@ module ActiveRecord
           STALE_STATEMENT_CODE = '0A50A'
 
 
-          def exec_no_cache(sql)
-            @connection.async_exec(sql)
+          def exec_no_cache(sql, name, binds)
+            log(sql, name, binds) {
+              @connection.async_exec(sql)
+            }
           end
 
-          def exec_cache(sql, binds)
+          def exec_cache(sql, name, binds)
             begin
               stmt_key = prepare_stmt(sql)
-              # Clear unconsumed
-              @connection.get_last_result()
-              @connection.send_query_prepared(stmt_key, binds.map { |col, val|
-                type_cast(val, col)
-              })
-              @connection.block()
-              @connection.get_last_result()
-            rescue PGError => e
+              casted_binds = binds.map { |col, val|
+                [col, type_cast(val, col)]
+              }
+              log(sql, name, casted_binds) do
+                @connection.send_query_prepared(stmt_key, casted_binds.map { |_, val| val })
+                @connection.block()
+                @connection.get_last_result()
+              end
+            rescue ActiveRecord::StatementInvalid => e
+              orig = e.original_exception
               begin
-                code = e.result.result_error_field(PGresult::PG_DIAG_SQLSTATE)
+                code = orig.result.result_error_field(PGresult::PG_DIAG_SQLSTATE)
               rescue
                 raise e
               end
@@ -243,7 +241,13 @@ module ActiveRecord
             sql_key = sql_cache_key(sql)
             unless @statements.key? sql_key
               nkey = @statements.next_key
-              @connection.prepare nkey, sql
+              begin
+                @connection.prepare nkey, sql
+              rescue => e
+                raise translate_exception_class(e, sql)
+              end
+              # Clear the queue
+              @connection.get_last_result
               @statements[sql_key] = nkey
             end
             @statements[sql_key]
