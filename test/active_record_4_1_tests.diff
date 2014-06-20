@@ -162,3 +162,16 @@ index 4476ce3..d42434b 100644
        ignored_sql.concat db_ignored_sql
      end
  
+diff --git a/activerecord/test/cases/transactions_test.rb b/activerecord/test/cases/transactions_test.rb
+index 1664f1a..e5c8e0d 100644
+--- a/activerecord/test/cases/transactions_test.rb
++++ b/activerecord/test/cases/transactions_test.rb
+@@ -403,7 +403,7 @@ class TransactionTest < ActiveRecord::TestCase
+         Topic.connection.release_savepoint("another")
+       end
+     end
+-  end
++  end if Topic.connection.supports_savepoints?
+ 
+   def test_rollback_when_commit_raises
+     Topic.connection.expects(:begin_db_transaction)

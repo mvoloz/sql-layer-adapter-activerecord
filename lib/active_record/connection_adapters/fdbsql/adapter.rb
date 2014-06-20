@@ -225,10 +225,6 @@ module ActiveRecord
         @statements.clear
       end
 
-      def create_savepoint
-        @logger.warn "#{adapter_name} does not support savepoints" if @logger
-      end
-
 
       protected
 
