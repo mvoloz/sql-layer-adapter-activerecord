@@ -28,7 +28,7 @@ group :development do
 
   # For AR
   gem 'bcrypt-ruby', '~> 3.0.0'
-  gem 'mocha', '~> 0.13.0', :require => false
+  gem 'mocha', '~> 0.14', :require => false
   gem 'nokogiri', '>= 1.4.5', '< 1.6'
 end
 
