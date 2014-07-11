@@ -39,13 +39,18 @@ module ActiveRecord
           # Exactly like super.visit_TableDefinition but also includes grouping
           def visit_FdbSqlTableDefinition(o)
             create_sql = "CREATE#{' TEMPORARY' if o.temporary} TABLE "
-            create_sql << "#{quote_table_name(o.name)} ("
-            create_sql << o.columns.map { |c| accept c }.join(', ')
-            if !o.groupings.empty?
-              create_sql << ', '
-              create_sql << o.groupings.map { |g| accept g }.join(', ')
+            create_sql << "#{quote_table_name(o.name)}"
+            if o.as
+              create_sql << " AS ( #{@conn.to_sql(o.as)} ) WITH DATA"
+            else
+              create_sql << "("
+              create_sql << o.columns.map { |c| accept c }.join(', ')
+              if !o.groupings.empty?
+                create_sql << ', '
+                create_sql << o.groupings.map { |g| accept g }.join(', ')
+              end
+              create_sql << ") #{o.options}"
             end
-            create_sql << ") #{o.options}"
             create_sql
           end
 

@@ -69,7 +69,11 @@ module ActiveRecord
 
         # NB: as added in 4.1.0
         def initialize(types, name, temporary, options, as = nil)
-          super
+          if ActiveRecord::VERSION::MAJOR > 4 || ActiveRecord::VERSION::MINOR >= 1
+            super
+          else
+            super(types, name, temporary, options)
+          end
           @groupings = []
         end
 

@@ -97,10 +97,28 @@ index f6774d7..4d6c18a 100644
  
    def teardown
 diff --git a/activerecord/test/cases/migration_test.rb b/activerecord/test/cases/migration_test.rb
-index 1bda472..481fd47 100644
+index 1bda472..4d3abee 100644
 --- a/activerecord/test/cases/migration_test.rb
 +++ b/activerecord/test/cases/migration_test.rb
-@@ -512,7 +512,7 @@ class MigrationTest < ActiveRecord::TestCase
+@@ -450,6 +450,8 @@ class MigrationTest < ActiveRecord::TestCase
+   end
+ 
+   def test_create_table_with_query
++    return skip "FDBSQL: CREATE TABLE AS WITH DATA not supported" if current_adapter?(:FdbSqlAdapter)
++
+     Person.connection.drop_table :table_from_query_testings rescue nil
+     Person.connection.create_table(:person, force: true)
+ 
+@@ -463,6 +465,8 @@ class MigrationTest < ActiveRecord::TestCase
+   end
+ 
+   def test_create_table_with_query_from_relation
++    return skip "FDBSQL: CREATE TABLE AS WITH DATA not supported" if current_adapter?(:FdbSqlAdapter)
++
+     Person.connection.drop_table :table_from_query_testings rescue nil
+     Person.connection.create_table(:person, force: true)
+ 
+@@ -512,7 +516,7 @@ class MigrationTest < ActiveRecord::TestCase
      end
    end
  
