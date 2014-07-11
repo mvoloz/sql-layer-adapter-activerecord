@@ -40,7 +40,7 @@ module ActiveRecord
           def visit_FdbSqlTableDefinition(o)
             create_sql = "CREATE#{' TEMPORARY' if o.temporary} TABLE "
             create_sql << "#{quote_table_name(o.name)}"
-            if o.as
+            if o.respond_to?(:as) and o.as
               create_sql << " AS ( #{@conn.to_sql(o.as)} ) WITH DATA"
             else
               create_sql << "("
