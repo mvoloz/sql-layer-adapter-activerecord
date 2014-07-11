@@ -178,15 +178,18 @@ module ActiveRecord
           end
 
           def exec_cache(sql, name, binds)
+            is_retry = false
             begin
               stmt_key = prepare_stmt(sql)
-              casted_binds = binds.map { |col, val|
-                [col, type_cast(val, col)]
-              }
-              log(sql, name, casted_binds) do
-                @connection.send_query_prepared(stmt_key, casted_binds.map { |_, val| val })
-                @connection.block()
-                @connection.get_last_result()
+              casted_binds = binds.map { |col, val| [ col, type_cast(val, col) ] }
+              casted_values = casted_binds.map { |_, val| val }
+              # Only log on first pass otherwise tests expecting certain query counts (may) fail
+              if is_retry
+                exec_cache_internal(stmt_key, casted_values)
+              else
+                log(sql, name, casted_binds) do
+                  exec_cache_internal(stmt_key, casted_values)
+                end
               end
             rescue ActiveRecord::StatementInvalid => e
               orig = e.original_exception
@@ -197,11 +200,19 @@ module ActiveRecord
               end
               if code == STALE_STATEMENT_CODE
                 @statements.delete(sql_cache_key(sql))
+                @logger.debug('Retrying last statement') if @logger
+                is_retry = true
                 retry
               else
                 raise e
               end
             end
+          end
+
+          def exec_cache_internal(stmt_key, bind_values)
+            @connection.send_query_prepared(stmt_key, bind_values)
+            @connection.block()
+            @connection.get_last_result()
           end
 
           def result_as_array(res)
