@@ -396,19 +396,13 @@ module ActiveRecord
             )
 
             if result.length == 1
-              if @sql_layer_version < 10904
-                execute(
-                  "COMMIT; "+
-                  "CALL sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]}); "+
-                  "BEGIN;",
-                  SCHEMA_LOG_NAME
-                )
-              else
-                execute(
-                  "SELECT sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]})",
-                  SCHEMA_LOG_NAME
-                )
-              end
+              # Not safe (or possible other than 1.9.4, 1.9.5) to use alter_seq_restart in transaction
+              execute(
+                "COMMIT; "+
+                "CALL sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]}); "+
+                "BEGIN; ",
+                SCHEMA_LOG_NAME
+              )
             else
               @logger.warn "Unable to determin max value for #{table_name}.#{primary_key}" if @logger
             end
