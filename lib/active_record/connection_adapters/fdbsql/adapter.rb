@@ -228,12 +228,19 @@ module ActiveRecord
 
       protected
 
+        # Shouldn't escape to user, caught and handled in exec_cache()
+        class StalePreparedStatement < ActiveRecord::StatementInvalid
+        end
+
+
         def translate_exception(exception, message)
           case exception.result.try(:error_field, PGresult::PG_DIAG_SQLSTATE)
           when DUPLICATE_KEY_CODE
             RecordNotUnique.new(message, exception)
           when FK_REFERENCING_VIOLATION_CODE, FK_REFERENCED_VIOLATION_CODE
             InvalidForeignKey.new(message, exception)
+          when STALE_STATEMENT_CODE
+            StalePreparedStatement.new(message)
           else
             super
           end
@@ -268,6 +275,7 @@ module ActiveRecord
         DUPLICATE_KEY_CODE = '23501'
         FK_REFERENCING_VIOLATION_CODE = '23503'
         FK_REFERENCED_VIOLATION_CODE = '23504'
+        STALE_STATEMENT_CODE = '0A50A'
 
 
         def connect

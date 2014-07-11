@@ -185,27 +185,21 @@ module ActiveRecord
               casted_values = casted_binds.map { |_, val| val }
               # Only log on first pass otherwise tests expecting certain query counts (may) fail
               if is_retry
-                exec_cache_internal(stmt_key, casted_values)
+                begin
+                  exec_cache_internal(stmt_key, casted_values)
+                rescue e
+                  raise translate_exception(e)
+                end
               else
                 log(sql, name, casted_binds) do
                   exec_cache_internal(stmt_key, casted_values)
                 end
               end
-            rescue ActiveRecord::StatementInvalid => e
-              orig = e.original_exception
-              begin
-                code = orig.result.result_error_field(PGresult::PG_DIAG_SQLSTATE)
-              rescue
-                raise e
-              end
-              if code == STALE_STATEMENT_CODE
-                @statements.delete(sql_cache_key(sql))
-                @logger.debug('Retrying last statement') if @logger
-                is_retry = true
-                retry
-              else
-                raise e
-              end
+            rescue StalePreparedStatement
+              @statements.delete(sql_cache_key(sql))
+              @logger.debug('Retrying last statement') if @logger
+              is_retry = true
+              retry
             end
           end
 
