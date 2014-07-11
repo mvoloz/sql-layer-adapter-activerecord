@@ -60,7 +60,7 @@ index d2f97df..ef56caa 100644
      @pirate = Pirate.create(:catchphrase => "Don' botharrr talkin' like one, savvy?")
      @ship = @pirate.create_ship(:name => 'Nights Dirty Lightning')
 diff --git a/activerecord/test/cases/base_test.rb b/activerecord/test/cases/base_test.rb
-index 0e6ed17..5b0feaf 100644
+index 0e6ed17..c146508 100644
 --- a/activerecord/test/cases/base_test.rb
 +++ b/activerecord/test/cases/base_test.rb
 @@ -87,6 +87,7 @@ class BasicsTest < ActiveRecord::TestCase
@@ -79,6 +79,14 @@ index 0e6ed17..5b0feaf 100644
        assert_equal 1, Topic.limit(Arel.sql('2-1')).to_a.length
      end
    end
+@@ -619,6 +621,7 @@ class BasicsTest < ActiveRecord::TestCase
+ 
+   unless current_adapter?(:PostgreSQLAdapter)
+     def test_respect_internal_encoding
++      return skip "FDBSQL: Column name encoding not supported" if current_adapter?(:FdbSqlAdapter)
+       old_default_internal = Encoding.default_internal
+       silence_warnings { Encoding.default_internal = "EUC-JP" }
+ 
 diff --git a/activerecord/test/cases/invalid_connection_test.rb b/activerecord/test/cases/invalid_connection_test.rb
 index f6774d7..4d6c18a 100644
 --- a/activerecord/test/cases/invalid_connection_test.rb
