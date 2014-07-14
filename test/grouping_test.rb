@@ -21,8 +21,7 @@
 # THE SOFTWARE.
 #
 
-require "test/unit"
-require 'active_record'
+require 'fdbsql_test_helper'
 
 class CreateCustomers < ActiveRecord::Migration
   def up
@@ -125,19 +124,7 @@ class ChangeOrdersAddGroupingNewStyle < ActiveRecord::Migration
 end
 
 
-class GroupingTest < Test::Unit::TestCase
-
-  TEST_SCHEMA = 'activerecord_unittest'
-
-  def setup
-    ActiveRecord::Base.establish_connection(:adapter  => 'fdbsql',
-                                            :database => TEST_SCHEMA,
-                                            :host     => 'localhost',
-                                            :port     => '15432',
-                                            :username => 'test',
-                                            :password => '')
-    ActiveRecord::Base.connection.recreate_database TEST_SCHEMA
-  end
+class GroupingTest < FdbSqlTestCase
 
   def get_parent_and_child
     ActiveRecord::Base.connection.select_rows <<-SQL
