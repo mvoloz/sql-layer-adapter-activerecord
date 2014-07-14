@@ -25,30 +25,16 @@ module ActiveRecord
 
   module ConnectionAdapters
 
-    # Add new methods for use in change_table migrations as
-    # the Table type is not customizable until 4.0
+    class FdbSqlAdapter < AbstractAdapter
+      
+      module ArVer
 
-    class Table
-
-      # Defers to add_reference in 4, which is already patched
-      if FdbSqlAdapter::ArVer::LT_4
-        orig_references = instance_method(:references)
-        define_method(:references) do |*args|
-          orig_references.bind(self).(*args)
-          options = args.extract_options!
-          grouping = options.delete(:grouping)
-          args.each do |col|
-            @base.add_grouping(@table_name, col) if grouping
-          end
-        end
-      end
-
-      def add_grouping(ref_name)
-        @base.add_grouping(@table_name, ref_name)
-      end
-
-      def remove_grouping()
-        @base.remove_grouping(@table_name)
+        LT_4 = (ActiveRecord::VERSION::MAJOR < 4)
+        GT_4= (ActiveRecord::VERSION::MAJOR > 4)
+        GTEQ_4 = (ActiveRecord::VERSION::MAJOR >= 4)
+        GTEQ_4_0_4 = (GTEQ_4 and (GT_4 or ActiveRecord::VERSION::MINOR >= 1 or ActiveRecord::VERSION::TINY >= 4))
+        GTEQ_4_1 = (GTEQ_4 and (GT_4 or ActiveRecord::VERSION::MINOR >= 1))
+        
       end
 
     end

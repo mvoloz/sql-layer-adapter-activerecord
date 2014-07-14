@@ -31,7 +31,7 @@ module ActiveRecord
 
         # Returns an array of arrays containing the field values
         # Order is the same as that returned by +columns+
-        if ActiveRecord::VERSION::MAJOR >= 4 && (ActiveRecord::VERSION::MINOR > 0 || ActiveRecord::VERSION::TINY >= 4)
+        if ArVer::GTEQ_4_0_4
           def select_rows(sql, name = nil, binds = [])
             exec_query(sql, name, binds).rows
           end
@@ -53,7 +53,7 @@ module ActiveRecord
           result = without_prepared_statement?(binds) ? exec_no_cache(sql, name, binds) :
                                                         exec_cache(sql, name, binds)
           result_array = result_as_array(result)
-          if ActiveRecord::VERSION::MAJOR >= 4
+          if ArVer::GTEQ_4
             column_types = compute_field_types(result)
             ret = ActiveRecord::Result.new(result.fields, result_array, column_types)
           else
@@ -75,7 +75,7 @@ module ActiveRecord
         end
         alias :exec_update :exec_delete
 
-        if ActiveRecord::VERSION::MAJOR < 4
+        if ArVer::LT_4
           # Checks whether there is currently no transaction active. This is done
           # by querying the database driver, and does not use the transaction
           # house-keeping information recorded by #increment_open_transactions and
@@ -140,7 +140,7 @@ module ActiveRecord
           # As of 4.1.0: Returns an ActiveRecord::Result instance.
           def select(sql, name = nil, binds = [])
             ret = exec_query(sql, name, binds)
-            ActiveRecord::VERSION::MAJOR >= 4 ? ret : ret.to_a
+            ArVer::GTEQ_4 ? ret : ret.to_a
           end
 
           # (Executes an INSERT and)

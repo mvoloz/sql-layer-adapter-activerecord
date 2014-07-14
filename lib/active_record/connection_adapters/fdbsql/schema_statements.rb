@@ -115,12 +115,12 @@ module ActiveRecord
             SCHEMA_LOG_NAME
           )
           # TODO: Rename sequence when syntax is supported
-          if ActiveRecord::VERSION::MAJOR >= 4
+          if ArVer::GTEQ_4
             rename_table_indexes(old_name, new_name)
           end
         end
 
-        if ActiveRecord::VERSION::MAJOR < 4
+        if ArVer::LT_4
           # Adds a new column to the named table.
           # See TableDefinition#column for details of the options you can use.
           def add_column(table_name, column_name, type, options = {})
@@ -181,7 +181,7 @@ module ActiveRecord
             "#{quote_column_name(column_name)} TO #{quote_column_name(new_column_name)}",
             SCHEMA_LOG_NAME
           )
-          if ActiveRecord::VERSION::MAJOR >= 4
+          if ArVer::GTEQ_4
             rename_column_indexes(table_name, column_name, new_column_name)
           end
         end
@@ -201,7 +201,7 @@ module ActiveRecord
 
         # TODO: implement def index_name_exists?() ?
 
-        if ActiveRecord::VERSION::MAJOR >= 4
+        if ArVer::GTEQ_4
           # Patch to add support for grouping option
           def add_reference(table_name, ref_name, options = {})
             super
@@ -238,7 +238,7 @@ module ActiveRecord
           end
         end
 
-        if ActiveRecord::VERSION::MAJOR < 4
+        if ArVer::LT_4
           # Returns a SELECT DISTINCT clause for a given set of columns
           # and a given ORDER BY clause.
           #
@@ -432,7 +432,7 @@ module ActiveRecord
           )
         end
 
-        if ActiveRecord::VERSION::MAJOR >= 4
+        if ArVer::GTEQ_4
           # Added as private in 4.0.0, moved to public in 4.0.4
           def update_table_definition(table_name, base)
             Table.new(table_name, base)
@@ -460,7 +460,7 @@ module ActiveRecord
           }
 
 
-          if ActiveRecord::VERSION::MAJOR < 4
+          if ArVer::LT_4
             def table_definition
               FdbSqlTableDefinition.new self
             end
