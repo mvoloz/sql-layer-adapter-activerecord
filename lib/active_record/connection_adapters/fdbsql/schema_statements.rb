@@ -442,7 +442,7 @@ module ActiveRecord
 
         private
 
-          SCHEMA_LOG_NAME = 'FDB_SCHEMA'
+          SCHEMA_LOG_NAME = 'SCHEMA'
 
           NATIVE_DATABASE_TYPES = {
             :primary_key  => { :name => "serial primary key" },

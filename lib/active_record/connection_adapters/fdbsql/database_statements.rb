@@ -36,7 +36,7 @@ module ActiveRecord
             exec_query(sql, name, binds).rows
           end
         else
-          def select_rows(sql, name = nil, binds=[])
+          def select_rows(sql, name = nil, binds = [])
             select_raw(sql, name).last
           end
         end
@@ -191,7 +191,7 @@ module ActiveRecord
                   raise translate_exception(e)
                 end
               else
-                log(sql, name, casted_binds) do
+                log(sql, name, binds) do
                   exec_cache_internal(stmt_key, casted_values)
                 end
               end

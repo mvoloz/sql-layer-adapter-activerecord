@@ -131,27 +131,6 @@ index f2d8f18..0cce39d 100644
    end
  
    def teardown
-diff --git a/activerecord/test/cases/log_subscriber_test.rb b/activerecord/test/cases/log_subscriber_test.rb
-index 57eac0c..35c88f2 100644
---- a/activerecord/test/cases/log_subscriber_test.rb
-+++ b/activerecord/test/cases/log_subscriber_test.rb
-@@ -73,6 +73,7 @@ class LogSubscriberTest < ActiveRecord::TestCase
-   end
-
-   def test_exists_query_logging
-+    skip if current_adapter?(:FdbSqlAdapter)
-     Developer.exists? 1
-     wait
-     assert_equal 1, @logger.logged(:debug).size
-@@ -113,7 +114,7 @@ class LogSubscriberTest < ActiveRecord::TestCase
-   end
-
-   def test_binary_data_is_not_logged
--    skip if current_adapter?(:Mysql2Adapter)
-+    skip if current_adapter?(:Mysql2Adapter, :FdbSqlAdapter)
-
-     Binary.create(data: 'some binary data')
-     wait
 diff --git a/activerecord/test/cases/migration_test.rb b/activerecord/test/cases/migration_test.rb
 index e99312c..d1d736f 100644
 --- a/activerecord/test/cases/migration_test.rb
