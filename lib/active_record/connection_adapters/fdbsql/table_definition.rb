@@ -67,7 +67,7 @@ module ActiveRecord
         # Array of GroupingDefinitions
         attr_accessor :groupings
 
-        # NB: as added in 4.1.0
+        # 'as' argument added in 4.1.0
         def initialize(types, name, temporary, options, as = nil)
           if ActiveRecord::VERSION::MAJOR > 4 || ActiveRecord::VERSION::MINOR >= 1
             super

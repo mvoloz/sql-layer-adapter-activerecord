@@ -465,7 +465,7 @@ module ActiveRecord
               FdbSqlTableDefinition.new self
             end
           else
-            # as added in 4.1
+            # 'as' argument added in 4.1.0
             def create_table_definition(name, temporary, options, as = nil)
               FdbSqlTableDefinition.new native_database_types, name, temporary, options, as
             end
