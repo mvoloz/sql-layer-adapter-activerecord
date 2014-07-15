@@ -21,39 +21,28 @@
 # THE SOFTWARE.
 #
 
-module ActiveRecord
+require 'minitest/autorun'
+require 'active_record'
 
-  module ConnectionAdapters
+if defined? Minitest::VERSION
+  # 5.x
+  TEST_CASE_BASE = Minitest::Test
+else
+  # 4.x
+  TEST_CASE_BASE = Minitest::Unit::TestCase
+end
 
-    # Add new methods for use in change_table migrations as
-    # the Table type is not customizable until 4.0
+class FdbSqlTestCase < TEST_CASE_BASE
+  TEST_SCHEMA = 'activerecord_unittest'
 
-    class Table
-
-      # Defers to add_reference in 4, which is already patched
-      if FdbSqlAdapter::ArVer::LT_4
-        orig_references = instance_method(:references)
-        define_method(:references) do |*args|
-          orig_references.bind(self).(*args)
-          options = args.extract_options!
-          grouping = options.delete(:grouping)
-          args.each do |col|
-            @base.add_grouping(@table_name, col) if grouping
-          end
-        end
-      end
-
-      def add_grouping(ref_name)
-        @base.add_grouping(@table_name, ref_name)
-      end
-
-      def remove_grouping()
-        @base.remove_grouping(@table_name)
-      end
-
-    end
-
+  def setup
+    ActiveRecord::Base.establish_connection(:adapter  => 'fdbsql',
+                                            :database => TEST_SCHEMA,
+                                            :host     => 'localhost',
+                                            :port     => '15432',
+                                            :username => 'test',
+                                            :password => '')
+    ActiveRecord::Base.connection.recreate_database TEST_SCHEMA
   end
-
 end
 

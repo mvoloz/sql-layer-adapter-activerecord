@@ -115,12 +115,12 @@ module ActiveRecord
             SCHEMA_LOG_NAME
           )
           # TODO: Rename sequence when syntax is supported
-          if ActiveRecord::VERSION::MAJOR >= 4
+          if ArVer::GTEQ_4
             rename_table_indexes(old_name, new_name)
           end
         end
 
-        if ActiveRecord::VERSION::MAJOR < 4
+        if ArVer::LT_4
           # Adds a new column to the named table.
           # See TableDefinition#column for details of the options you can use.
           def add_column(table_name, column_name, type, options = {})
@@ -181,7 +181,7 @@ module ActiveRecord
             "#{quote_column_name(column_name)} TO #{quote_column_name(new_column_name)}",
             SCHEMA_LOG_NAME
           )
-          if ActiveRecord::VERSION::MAJOR >= 4
+          if ArVer::GTEQ_4
             rename_column_indexes(table_name, column_name, new_column_name)
           end
         end
@@ -199,7 +199,9 @@ module ActiveRecord
           super
         end
 
-        if ActiveRecord::VERSION::MAJOR >= 4
+        # TODO: implement def index_name_exists?() ?
+
+        if ArVer::GTEQ_4
           # Patch to add support for grouping option
           def add_reference(table_name, ref_name, options = {})
             super
@@ -236,7 +238,7 @@ module ActiveRecord
           end
         end
 
-        if ActiveRecord::VERSION::MAJOR < 4
+        if ArVer::LT_4
           # Returns a SELECT DISTINCT clause for a given set of columns
           # and a given ORDER BY clause.
           #
@@ -258,7 +260,7 @@ module ActiveRecord
           # FDB SQL requires order columns appear in the SELECT.
           def columns_for_distinct(columns, orders)
             # Lifted from the default Postgres implementation
-            order_columns = orders.map{ |s|
+            order_columns = orders.reject(&:blank?).map{ |s|
                 # Convert Arel node to string
                 s = s.to_sql unless s.is_a?(String)
                 # Remove any ASC/DESC modifiers
@@ -394,19 +396,13 @@ module ActiveRecord
             )
 
             if result.length == 1
-              if @sql_layer_version < 10904
-                execute(
-                  "COMMIT; "+
-                  "CALL sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]}); "+
-                  "BEGIN;",
-                  SCHEMA_LOG_NAME
-                )
-              else
-                execute(
-                  "SELECT sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]})",
-                  SCHEMA_LOG_NAME
-                )
-              end
+              # Not safe (or possible other than 1.9.4, 1.9.5) to use alter_seq_restart in transaction
+              execute(
+                "COMMIT; "+
+                "CALL sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]}); "+
+                "BEGIN; ",
+                SCHEMA_LOG_NAME
+              )
             else
               @logger.warn "Unable to determin max value for #{table_name}.#{primary_key}" if @logger
             end
@@ -436,7 +432,7 @@ module ActiveRecord
           )
         end
 
-        if ActiveRecord::VERSION::MAJOR >= 4
+        if ArVer::GTEQ_4
           # Added as private in 4.0.0, moved to public in 4.0.4
           def update_table_definition(table_name, base)
             Table.new(table_name, base)
@@ -446,7 +442,7 @@ module ActiveRecord
 
         private
 
-          SCHEMA_LOG_NAME = 'FDB_SCHEMA'
+          SCHEMA_LOG_NAME = 'SCHEMA'
 
           NATIVE_DATABASE_TYPES = {
             :primary_key  => { :name => "serial primary key" },
@@ -464,13 +460,14 @@ module ActiveRecord
           }
 
 
-          if ActiveRecord::VERSION::MAJOR < 4
+          if ArVer::LT_4
             def table_definition
               FdbSqlTableDefinition.new self
             end
           else
-            def create_table_definition(name, temporary, options)
-              FdbSqlTableDefinition.new native_database_types, name, temporary, options
+            # 'as' argument added in 4.1.0
+            def create_table_definition(name, temporary, options, as = nil)
+              FdbSqlTableDefinition.new native_database_types, name, temporary, options, as
             end
           end
 

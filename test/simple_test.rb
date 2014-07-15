@@ -21,11 +21,7 @@
 # THE SOFTWARE.
 #
 
-$:.unshift File.expand_path(File.join(File.dirname(__FILE__), '../lib'))
-
-require "test/unit"
-require 'rubygems'
-require 'active_record'
+require 'fdbsql_test_helper'
 
 class User < ActiveRecord::Base
   has_one :addr, :class_name => 'Addr'
@@ -42,19 +38,13 @@ class Addr < ActiveRecord::Base
   end
 end
 
-class FDBSQLSimpleTest < Test::Unit::TestCase
+
+class FDBSQLSimpleTest < FdbSqlTestCase
 
   def setup()
-
-    ActiveRecord::Base.establish_connection(:adapter  => 'fdbsql',
-                                            :database => 'activerecord_unittest',
-                                            :host     => 'localhost',
-                                            :port     => '15432',
-                                            :username => 'test',
-                                            :password => '')
+    super
 
     ActiveRecord::Schema.drop_table(User.table_name) rescue nil
-
     ActiveRecord::Schema.drop_table(Addr.table_name) rescue nil
 
     ActiveRecord::Schema.define do
@@ -85,8 +75,8 @@ class FDBSQLSimpleTest < Test::Unit::TestCase
       u.admin = true
     end
 
-    assert_not_nil john
-    assert_not_nil john.id
+    refute_nil john
+    refute_nil john.id
 
     john.create_addr do |a|
       a.street = "123 Oak"
@@ -94,7 +84,7 @@ class FDBSQLSimpleTest < Test::Unit::TestCase
       a.zip = "02114"
     end
 
-    assert_not_nil john.addr
+    refute_nil john.addr
 
     jane = User.create do |u|
       u.first_name = "Jane"
@@ -104,8 +94,8 @@ class FDBSQLSimpleTest < Test::Unit::TestCase
       u.admin = false
     end
 
-    assert_not_nil jane
-    assert_not_nil jane.id
+    refute_nil jane
+    refute_nil jane.id
 
     jane.create_addr do |a|
       a.street = "456 Pine"
@@ -113,7 +103,7 @@ class FDBSQLSimpleTest < Test::Unit::TestCase
       a.zip = "02118"
     end
 
-    assert_not_nil jane.addr
+    refute_nil jane.addr
 
     assert_equal 2, User.count
 
@@ -169,3 +159,4 @@ class FDBSQLSimpleTest < Test::Unit::TestCase
   end
 
 end
+

@@ -27,6 +27,7 @@ require 'active_record/connection_adapters/abstract_adapter'
 require 'active_record/connection_adapters/statement_pool'
 require 'arel/visitors/bind_visitor'
 
+require 'active_record/connection_adapters/fdbsql/ar_ver'
 require 'active_record/connection_adapters/fdbsql/column'
 require 'active_record/connection_adapters/fdbsql/database_limits'
 require 'active_record/connection_adapters/fdbsql/database_statements'
@@ -38,7 +39,7 @@ require 'active_record/connection_adapters/fdbsql/table'
 require 'active_record/connection_adapters/fdbsql/table_definition'
 require 'active_record/connection_adapters/fdbsql/typeid'
 
-if ActiveRecord::VERSION::MAJOR >= 4
+if ActiveRecord::ConnectionAdapters::FdbSqlAdapter::ArVer::GTEQ_4
   require 'active_record/connection_adapters/fdbsql/schema_creation'
   require 'active_record/connection_adapters/fdbsql/types'
 end
@@ -103,7 +104,7 @@ module ActiveRecord
       include SchemaStatements
       include TypeID
 
-      if ActiveRecord::VERSION::MAJOR >= 4
+      if ArVer::GTEQ_4
         include Types
       end
 
@@ -125,7 +126,7 @@ module ActiveRecord
 
       # ADAPTER ==================================================
 
-      if ActiveRecord::VERSION::MAJOR >= 4
+      if ArVer::GTEQ_4
         def schema_creation
           FdbSqlSchemaCreation.new self
         end
@@ -194,7 +195,7 @@ module ActiveRecord
         false
       end
 
-      if ActiveRecord::VERSION::MAJOR >= 4 && (ActiveRecord::VERSION::MINOR > 0 || ActiveRecord::VERSION::TINY >= 4)
+      if ArVer::GTEQ_4_0_4
         def active_threadsafe?
           @connection.connect_poll != PG::PGRES_POLLING_FAILED
         end
@@ -225,12 +226,13 @@ module ActiveRecord
         @statements.clear
       end
 
-      def create_savepoint
-        @logger.warn "#{adapter_name} does not support savepoints" if @logger
-      end
-
 
       protected
+
+        # Shouldn't escape to user, caught and handled in exec_cache()
+        class StalePreparedStatement < ActiveRecord::StatementInvalid
+        end
+
 
         def translate_exception(exception, message)
           case exception.result.try(:error_field, PGresult::PG_DIAG_SQLSTATE)
@@ -238,6 +240,8 @@ module ActiveRecord
             RecordNotUnique.new(message, exception)
           when FK_REFERENCING_VIOLATION_CODE, FK_REFERENCED_VIOLATION_CODE
             InvalidForeignKey.new(message, exception)
+          when STALE_STATEMENT_CODE
+            StalePreparedStatement.new(message)
           else
             super
           end
@@ -272,6 +276,7 @@ module ActiveRecord
         DUPLICATE_KEY_CODE = '23501'
         FK_REFERENCING_VIOLATION_CODE = '23503'
         FK_REFERENCED_VIOLATION_CODE = '23504'
+        STALE_STATEMENT_CODE = '0A50A'
 
 
         def connect

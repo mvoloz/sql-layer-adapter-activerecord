@@ -31,57 +31,51 @@ module ActiveRecord
 
         # Returns an array of arrays containing the field values
         # Order is the same as that returned by +columns+
-        if ActiveRecord::VERSION::MAJOR >= 4 && (ActiveRecord::VERSION::MINOR > 0 || ActiveRecord::VERSION::TINY >= 4)
-          def select_rows(sql, name = 'SQL', binds = [])
+        if ArVer::GTEQ_4_0_4
+          def select_rows(sql, name = nil, binds = [])
             exec_query(sql, name, binds).rows
           end
         else
-          def select_rows(sql, name = 'SQL')
+          def select_rows(sql, name = nil, binds = [])
             select_raw(sql, name).last
           end
         end
 
         # Executes the SQL statement in the context of this connection.
-        def execute(sql, name = 'SQL')
-          log(sql, name) do
-            @connection.async_exec(sql)
-          end
+        def execute(sql, name = nil)
+          exec_no_cache(sql, name, nil)
         end
 
         # Executes +sql+ statement in the context of this connection using
         # +binds+ as the bind substitutes. +name+ is logged along with
         # the executed +sql+ statement.
-        def exec_query(sql, name = 'SQL', binds = [])
-          log(sql, name, binds) do
-            result = without_prepared_statement?(binds) ? exec_no_cache(sql) :
-                                                          exec_cache(sql, binds)
-            result_array = result_as_array(result)
-            if ActiveRecord::VERSION::MAJOR >= 4
-              column_types = compute_field_types(result)
-              ret = ActiveRecord::Result.new(result.fields, result_array, column_types)
-            else
-              ret = ActiveRecord::Result.new(result.fields, result_array)
-            end
-            result.clear
-            ret
+        def exec_query(sql, name = nil, binds = [])
+          result = without_prepared_statement?(binds) ? exec_no_cache(sql, name, binds) :
+                                                        exec_cache(sql, name, binds)
+          result_array = result_as_array(result)
+          if ArVer::GTEQ_4
+            column_types = compute_field_types(result)
+            ret = ActiveRecord::Result.new(result.fields, result_array, column_types)
+          else
+            ret = ActiveRecord::Result.new(result.fields, result_array)
           end
+          result.clear
+          ret
         end
 
         # Executes delete +sql+ statement in the context of this connection using
         # +binds+ as the bind substitutes. +name+ is the logged along with
         # the executed +sql+ statement.
-        def exec_delete(sql, name = 'SQL', binds = [])
-          log(sql, name, binds) do
-            result = without_prepared_statement?(binds) ? exec_no_cache(sql) :
-                                                          exec_cache(sql, binds)
-            affected = result.cmd_tuples
-            result.clear
-            affected
-          end
+        def exec_delete(sql, name = nil, binds = [])
+          result = without_prepared_statement?(binds) ? exec_no_cache(sql, name, binds) :
+                                                        exec_cache(sql, name, binds)
+          affected = result.cmd_tuples
+          result.clear
+          affected
         end
         alias :exec_update :exec_delete
 
-        if ActiveRecord::VERSION::MAJOR < 4
+        if ArVer::LT_4
           # Checks whether there is currently no transaction active. This is done
           # by querying the database driver, and does not use the transaction
           # house-keeping information recorded by #increment_open_transactions and
@@ -143,9 +137,10 @@ module ActiveRecord
 
           # Returns an array of record hashes with the column names as keys and
           # column values as values.
+          # As of 4.1.0: Returns an ActiveRecord::Result instance.
           def select(sql, name = nil, binds = [])
             ret = exec_query(sql, name, binds)
-            ActiveRecord::VERSION::MAJOR >= 4 ? ret : ret.to_a
+            ArVer::GTEQ_4 ? ret : ret.to_a
           end
 
           # (Executes an INSERT and)
@@ -176,33 +171,42 @@ module ActiveRecord
           STALE_STATEMENT_CODE = '0A50A'
 
 
-          def exec_no_cache(sql)
-            @connection.async_exec(sql)
+          def exec_no_cache(sql, name, binds)
+            log(sql, name, binds) {
+              @connection.async_exec(sql)
+            }
           end
 
-          def exec_cache(sql, binds)
+          def exec_cache(sql, name, binds)
+            is_retry = false
             begin
               stmt_key = prepare_stmt(sql)
-              # Clear unconsumed
-              @connection.get_last_result()
-              @connection.send_query_prepared(stmt_key, binds.map { |col, val|
-                type_cast(val, col)
-              })
-              @connection.block()
-              @connection.get_last_result()
-            rescue PGError => e
-              begin
-                code = e.result.result_error_field(PGresult::PG_DIAG_SQLSTATE)
-              rescue
-                raise e
-              end
-              if code == STALE_STATEMENT_CODE
-                @statements.delete(sql_cache_key(sql))
-                retry
+              casted_binds = binds.map { |col, val| [ col, type_cast(val, col) ] }
+              casted_values = casted_binds.map { |_, val| val }
+              # Only log on first pass otherwise tests expecting certain query counts (may) fail
+              if is_retry
+                begin
+                  exec_cache_internal(stmt_key, casted_values)
+                rescue e
+                  raise translate_exception(e)
+                end
               else
-                raise e
+                log(sql, name, binds) do
+                  exec_cache_internal(stmt_key, casted_values)
+                end
               end
+            rescue StalePreparedStatement
+              @statements.delete(sql_cache_key(sql))
+              @logger.debug('Retrying last statement') if @logger
+              is_retry = true
+              retry
             end
+          end
+
+          def exec_cache_internal(stmt_key, bind_values)
+            @connection.send_query_prepared(stmt_key, bind_values)
+            @connection.block()
+            @connection.get_last_result()
           end
 
           def result_as_array(res)
@@ -242,7 +246,13 @@ module ActiveRecord
             sql_key = sql_cache_key(sql)
             unless @statements.key? sql_key
               nkey = @statements.next_key
-              @connection.prepare nkey, sql
+              begin
+                @connection.prepare nkey, sql
+              rescue => e
+                raise translate_exception_class(e, sql)
+              end
+              # Clear the queue
+              @connection.get_last_result
               @statements[sql_key] = nkey
             end
             @statements[sql_key]

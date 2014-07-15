@@ -25,7 +25,7 @@ module ActiveRecord
 
   module ConnectionAdapters
 
-    if ActiveRecord::VERSION::MAJOR < 4
+    if FdbSqlAdapter::ArVer::LT_4
 
       class FdbSqlGroupingDefinition < Struct.new(:base, :ref_name)
         def to_sql
@@ -67,8 +67,12 @@ module ActiveRecord
         # Array of GroupingDefinitions
         attr_accessor :groupings
 
-        def initialize(types, name, temporary, options)
-          super
+        def initialize(types, name, temporary, options, as = nil)
+          if FdbSqlAdapter::ArVer::GTEQ_4_1
+            super
+          else
+            super(types, name, temporary, options)
+          end
           @groupings = []
         end
 

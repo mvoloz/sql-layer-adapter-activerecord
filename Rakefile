@@ -66,7 +66,7 @@ namespace :test do
   desc "Echo the command for patching the ActiveRecord tests"
   task :patch_cmd do
     require 'active_record'
-    puts "git apply --directory=#{AR_PATH}/.. test/active_record_#{ActiveRecord::VERSION::MAJOR}_tests.diff"
+    puts "git apply --verbose --directory=#{AR_PATH}/.. test/active_record_#{ActiveRecord::VERSION::MAJOR}_#{ActiveRecord::VERSION::MINOR}_tests.diff"
   end
 end
 
