@@ -43,6 +43,7 @@ class FdbSqlTestCase < TEST_CASE_BASE
                                             :username => 'test',
                                             :password => '')
     ActiveRecord::Base.connection.recreate_database TEST_SCHEMA
+    @connection = ActiveRecord::Base.connection
   end
 end
 
