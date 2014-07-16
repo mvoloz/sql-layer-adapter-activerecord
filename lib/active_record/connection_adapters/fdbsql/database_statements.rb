@@ -191,7 +191,7 @@ module ActiveRecord
                   raise translate_exception(e)
                 end
               else
-                log(sql, name, binds) do
+                log(sql, name, ArVer::GTEQ_4_1 ? casted_binds : binds) do
                   exec_cache_internal(stmt_key, casted_values)
                 end
               end

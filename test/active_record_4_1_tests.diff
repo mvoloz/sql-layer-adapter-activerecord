@@ -22,7 +22,16 @@ diff --git a/activerecord/test/cases/associations/has_many_associations_test.rb 
 index a86fb15..618865d 100644
 --- a/activerecord/test/cases/associations/has_many_associations_test.rb
 +++ b/activerecord/test/cases/associations/has_many_associations_test.rb
-@@ -832,6 +832,7 @@ class HasManyAssociationsTest < ActiveRecord::TestCase
+@@ -47,6 +47,8 @@ class HasManyAssociationsTest < ActiveRecord::TestCase
+            :categorizations, :jobs
+ 
+   def setup
++    # Ensure clean state for adapters without savepoints
++    Bulb.delete_all unless supports_savepoints?
+     Client.destroyed_client_ids.clear
+   end
+ 
+@@ -857,6 +859,7 @@ class HasManyAssociationsTest < ActiveRecord::TestCase
    end
  
    def test_transaction_when_deleting_persisted
