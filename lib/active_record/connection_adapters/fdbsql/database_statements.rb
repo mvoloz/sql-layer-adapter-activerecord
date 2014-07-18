@@ -129,7 +129,32 @@ module ActiveRecord
         # Won't be called unless adapter claims supports_explain?
         def explain(arel, binds = [])
           sql = "EXPLAIN #{to_sql(arel, binds)}"
-          exec_query(sql, 'EXPLAIN', binds)
+          ExplainPrettyPrinter.new.pp(exec_query(sql, 'EXPLAIN', binds))
+        end
+
+        class ExplainPrettyPrinter
+          # Pretty prints the result of a EXPLAIN as it would appear in fdbsqlcli:
+          #
+          #    test=> EXPLAIN SELECT 1;
+          #              OPERATORS
+          #    ----------------------------
+          #     Project_Default(1)
+          #       ValuesScan_Default([])
+          #    (2 rows)
+          #
+          def pp(result)
+            desc = result.columns.first
+            # Bunch of 1-length arrays
+            lines = result.rows.map { |l| l[0] }
+            # Plus for padding on each side
+            width = [desc, *lines].map(&:length).max + 2
+            pp = []
+            pp << desc.center(width).rstrip
+            pp << '-' * width
+            pp += lines.map {|l| " #{l}"}
+            pp << "(#{lines.length} rows)"
+            pp.join("\n") + "\n"
+          end
         end
 
 

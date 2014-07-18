@@ -39,11 +39,9 @@ class Addr < ActiveRecord::Base
 end
 
 
-class FDBSQLSimpleTest < FdbSqlTestCase
+class SimpleTest < FdbSqlTestCase
 
-  def setup()
-    super
-
+  def test_create_user_records
     ActiveRecord::Schema.drop_table(User.table_name) rescue nil
     ActiveRecord::Schema.drop_table(Addr.table_name) rescue nil
 
@@ -62,10 +60,6 @@ class FDBSQLSimpleTest < FdbSqlTestCase
         t.string :zip, :limit => 6
       end
     end
-  end
-
-
-  def test_create_user_records
 
     john = User.create do |u|
       u.first_name = "John"
@@ -158,5 +152,15 @@ class FDBSQLSimpleTest < FdbSqlTestCase
 
   end
 
+  def test_explain
+    # Simple enough query to hopefully avoid being too sensitive
+    assert_equal <<-EOS, @connection.explain('SELECT 1')
+        OPERATORS
+--------------------------
+ Project_Default(1)
+   ValuesScan_Default([])
+(2 rows)
+EOS
+  end
 end
 
