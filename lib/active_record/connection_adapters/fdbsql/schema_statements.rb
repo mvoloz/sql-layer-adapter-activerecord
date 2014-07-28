@@ -380,11 +380,11 @@ module ActiveRecord
         # Resets the sequence of a table's primary key to the maximum value.
         def reset_pk_sequence!(table_name, primary_key=nil, sequence_name=nil)
           primary_key, seq_schema, sequence_name = pk_and_sequence_for(table_name, true)
-          if primary_key && !sequence_name
-            @logger.warn "#{table_name} has primary key #{primary_key} with no sequence" if @logger
-          end
-
-          if primary_key && sequence_name
+          if !primary_key
+            @logger.warn "#{table_name} has no primary key" if @logger
+          elsif !sequence_name
+            @logger.warn "#{table_name} primary key #{primary_key} has no sequence" if @logger
+          else
             seq_from_where = "FROM information_schema.sequences "+
                              "WHERE sequence_schema='#{quote_string(seq_schema)}' "+
                              "AND sequence_name='#{quote_string(sequence_name)}'"
@@ -396,15 +396,15 @@ module ActiveRecord
             )
 
             if result.length == 1
-              # Not safe (or possible other than 1.9.4, 1.9.5) to use alter_seq_restart in transaction
-              execute(
-                "COMMIT; "+
-                "CALL sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]}); "+
-                "BEGIN; ",
-                SCHEMA_LOG_NAME
-              )
+              if @sql_layer_version >= 10906
+                stmt = "ALTER TABLE #{quote_table_name(table_name)} ALTER COLUMN #{quote_column_name(primary_key)} RESTART WITH #{result[0][0]}"
+              else
+                # Not safe (or possible other than 1.9.4, 1.9.5) to use alter_seq_restart in transaction
+                stmt = "COMMIT; CALL sys.alter_seq_restart('#{quote_string(seq_schema)}', '#{quote_string(sequence_name)}', #{result[0][0]}); BEGIN; "
+              end
+              execute(stmt, SCHEMA_LOG_NAME)
             else
-              @logger.warn "Unable to determin max value for #{table_name}.#{primary_key}" if @logger
+              @logger.warn "Unable to determine max value for #{table_name}.#{primary_key}" if @logger
             end
           end
         end
