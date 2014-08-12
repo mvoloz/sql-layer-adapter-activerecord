@@ -164,7 +164,7 @@ module ActiveRecord
           # CLOB maps to LONGTEXT. Not an alias but reusable Type.
           add_alias 'clob', 'varchar', 25
           # FLOAT is a direct alias
-          add_alias 'flaot', 'double'
+          add_alias 'float', 'double'
           # TIMESTAMP is a direct alias
           add_alias 'timestamp', 'datetime'
 
