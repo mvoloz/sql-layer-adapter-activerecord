@@ -26,8 +26,15 @@ require 'fdbsql_test_helper'
 # Ensure task gets registered
 require './lib/activerecord-fdbsql-adapter'
 
-class CreateTaskTest < TEST_CASE_BASE
+class TaskTestBase < TEST_CASE_BASE
   def setup
+    return skip "Tasks not supported below AR 4" if ActiveRecord::VERSION::MAJOR < 4
+  end
+end
+
+class CreateTaskTest < TaskTestBase
+  def setup
+    super
     @connection    = stub(:create_database => true)
     @configuration = {
       'adapter'  => 'fdbsql',
@@ -81,8 +88,9 @@ class CreateTaskTest < TEST_CASE_BASE
   end
 end
 
-class DropTaskTest < TEST_CASE_BASE
+class DropTaskTest < TaskTestBase
   def setup
+    super
     @connection    = stub(:drop_database => true)
     @configuration = {
       'adapter'  => 'fdbsql',
@@ -106,8 +114,9 @@ class DropTaskTest < TEST_CASE_BASE
   end
 end
 
-class PurgeTaskTest < TEST_CASE_BASE
+class PurgeTaskTest < TaskTestBase
   def setup
+    super
     @connection    = stub(:create_database => true, :drop_database => true)
     @configuration = {
       'adapter'  => 'fdbsql',
@@ -147,8 +156,9 @@ class PurgeTaskTest < TEST_CASE_BASE
   end
 end
 
-class StructureDumpTaskTest < TEST_CASE_BASE
+class StructureDumpTaskTest < TaskTestBase
   def setup
+    super
     @connection    = stub(:structure_dump => true)
     @configuration = {
       'adapter'  => 'fdbsql',
@@ -166,8 +176,9 @@ class StructureDumpTaskTest < TEST_CASE_BASE
   end
 end
 
-class StructureLoadTaskTest < TEST_CASE_BASE
+class StructureLoadTaskTest < TaskTestBase
   def setup
+    super
     @connection    = stub
     @configuration = {
       'adapter'  => 'fdbsql',
