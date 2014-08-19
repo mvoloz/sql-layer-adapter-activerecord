@@ -29,6 +29,9 @@ module ActiveRecord
 
     class FdbSqlDatabaseTasks
 
+      DEFAULT_CHARSET = ENV['CHARSET'] || 'UTF8'
+      DEFAULT_COLLATION = ENV['COLLATION'] || 'ucs_binary'
+
       delegate :connection, :establish_connection, :clear_active_connections!,
         to: ActiveRecord::Base
 
@@ -39,8 +42,8 @@ module ActiveRecord
       def create
         # NB: Relies on being able to connect to non-existing schema
         establish_connection configuration.merge('database' => 'fdbsql')
-        # TODO: Pass options (e.g. default character set) when available
-        connection.create_database configuration['database']
+        connection.create_database configuration['database'], create_options
+        establish_connection configuration
       rescue ActiveRecord::StatementInvalid => error
         if /Schema .* already exists/ === error.message
           raise DatabaseAlreadyExists
@@ -50,16 +53,13 @@ module ActiveRecord
       end
 
       def drop
-        establish_connection
+        # NB: Relies on being able to connect to non-existing schema
+        establish_connection configuration.merge('database' => 'fdbsql')
         connection.drop_database configuration['database']
       end
 
-      def encoding
-        connection.encoding
-      end
-
       def charset
-        connectionc.charset
+        connection.charset
       end
 
       def collation
@@ -69,7 +69,7 @@ module ActiveRecord
       def purge
         clear_active_connections!
         drop
-        create true
+        create
       end
 
       def structure_dump(filename)
@@ -88,6 +88,12 @@ module ActiveRecord
 
         def configuration
           @configuration
+        end
+
+        def create_options
+          cs = configuration['charset'] || configuration['encoding'] || DEFAULT_CHARSET
+          co = configuration['collation'] || DEFAULT_COLLATION
+          configuration.merge('charset' => cs, 'collation' => co)
         end
 
         def set_fdbsql_env

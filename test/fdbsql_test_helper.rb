@@ -22,6 +22,7 @@
 #
 
 require 'minitest/autorun'
+require 'mocha/setup'
 require 'active_record'
 
 if defined? Minitest::VERSION
