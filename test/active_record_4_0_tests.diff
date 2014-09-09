@@ -168,6 +168,26 @@ index db3bb56..1388c59 100644
      assert_not_equal "Hm is it possible?", Topic.find(3).title
  
      topic.update_attributes(id: 1234)
+diff --git a/activerecord/test/cases/relations_test.rb b/activerecord/test/cases/relations_test.rb
+index 755a22a..027dab6 100644
+--- a/activerecord/test/cases/relations_test.rb
++++ b/activerecord/test/cases/relations_test.rb
+@@ -1321,6 +1321,7 @@ class RelationTest < ActiveRecord::TestCase
+   end
+
+   def test_update_all_with_joins_and_limit
++    return skip "FDBSQL: Incompatible query due to pipeline bug" if current_adapter?(:FdbSqlAdapter)
+     comments = Comment.joins(:post).where('posts.id' => posts(:welcome).id).limit(1)
+     assert_equal 1, comments.update_all(:post_id => posts(:thinking).id)
+   end
+@@ -1333,6 +1334,7 @@ class RelationTest < ActiveRecord::TestCase
+   end
+
+   def test_update_all_with_joins_and_offset
++    return skip "FDBSQL: Incompatible query due to pipeline bug" if current_adapter?(:FdbSqlAdapter)
+     all_comments = Comment.joins(:post).where('posts.id' => posts(:welcome).id)
+     count        = all_comments.count
+     comments     = all_comments.offset(1)
 diff --git a/activerecord/test/cases/schema_dumper_test.rb b/activerecord/test/cases/schema_dumper_test.rb
 index 1ee8e60..8b59432 100644
 --- a/activerecord/test/cases/schema_dumper_test.rb
