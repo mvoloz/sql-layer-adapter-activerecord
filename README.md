@@ -1,28 +1,21 @@
 ## FoundationDB SQL Layer ActiveRecord Adapter
 
-The [FoundationDB SQL Layer](https://github.com/FoundationDB/sql-layer) is a
-full SQL implementation built on the [FoundationDB](https://foundationdb.com)
-storage substrate. It provides high performance, multi-node scalability,
-fault-tolerance and true multi-key ACID transactions.
+The [FoundationDB SQL Layer](https://foundationdb.com/layers/sql) is a
+fault-tolerant and scalable open source RDBMS, best suited for applications
+with high concurrency and short transactional workloads.
 
 This project provides connection adapter integration for ActiveRecord.
 
 
 ### Supported SQL Layer Versions
 
-Version 1.9.3 is the minimum recommended release for use with this adapter.
+Version 2.0.0 is the recommended release for use with this adapter.
 
-While 1.9.2 is technically supported, it is known to contain a number of
-limitations preventing complete support.
-
-All previous releases are unsupported.
-
+Releases back to 1.9.3 are supported and any previous are unsupported.
 
 ### Supported ActiveRecord Versions
 
-This project currently supports Rails v3.2 and v4.0.
-
-Support for v4.1 will be available shortly after it is released as stable.
+This project currently supports Rails 3.2, 4.0 and 4.1.
 
 
 ### Quick Start
@@ -46,7 +39,7 @@ Follow the guide through Step 3.2 and then, before step 4, perform the steps bel
 
 1. Add *one* the following lines to `Gemfile`:
     - Latest stable release:
-        - `gem 'activerecord-fdbsql-adapter', '~> 1.1.0'`
+        - `gem 'activerecord-fdbsql-adapter', '~> 1.2.0'`
     - Unreleased development version:
         - `gem 'activerecord-fdbsql-adapter', github: 'FoundationDB/sql-layer-adapter-activerecord'`
 2. Install the new gem
