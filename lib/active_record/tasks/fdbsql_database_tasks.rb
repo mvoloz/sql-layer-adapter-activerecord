@@ -73,14 +73,15 @@ module ActiveRecord
       end
 
       def structure_dump(filename)
-        set_fdbsql_env
-        command = "fdbsqldump --no-data --output #{Shellwords.escape(filename)} #{Shellwords.escape(configuration['database'])}"
-        raise 'Error dumping database' unless Kernel.system(command)
+        args = make_arg_array('fdbsqldump')
+        args << '--no-data' << '--output' << filename << configuration['database']
+        kernel_system('dump', args)
       end
 
       def structure_load(filename)
-        set_fdbsql_env
-        Kernel.system("fdbsqlcli --quiet --file #{Shellwords.escape(filename)} #{configuration['database']}")
+        args = make_arg_array('fdbsqlload')
+        args << '--quiet' << '--schema' << configuration['database'] << filename
+        kernel_system('load', args)
       end
 
 
@@ -96,11 +97,20 @@ module ActiveRecord
           configuration.merge('charset' => cs, 'collation' => co)
         end
 
-        def set_fdbsql_env
-          ENV['FDBSQL_HOST'] = configuration['host'] if configuration['host']
-          ENV['FDBSQL_PORT'] = configuration['port'].to_s if configuration['port']
-          ENV['FDBSQL_USER'] = configuration['username'].to_s if configuration['username']
-          ENV['FDBSQL_PASSWORDD'] = configuration['password'].to_s if configuration['password']
+        def make_arg_array(program)
+          args = [ program ]
+          args << '--host' << configuration['host'] if configuration['host']
+          args << '--port' << configuration['port'].to_s if configuration['port']
+          args << '--user' << configuration['user'] if configuration['user']
+          args << '--password' << configuration['password'] if configuration['password']
+          return args
+        end
+
+        def kernel_system(desc, args)
+          unless Kernel.system(*args)
+            $stderr.puts "Could not #{desc} the database structure. "\
+                "Make sure `#{args[0]}` is in your PATH and check the command output for warnings."
+          end
         end
 
     end
