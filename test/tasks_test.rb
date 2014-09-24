@@ -171,7 +171,7 @@ class StructureDumpTaskTest < TaskTestBase
 
   def test_structure_dump
     filename = "awesome-file.sql"
-    Kernel.expects(:system).with("fdbsqldump --no-data --output #{filename} my_test_schema").returns(true)
+    Kernel.expects(:system).with("fdbsqldump", "--no-data", "--output", filename, "my_test_schema").returns(true)
     ActiveRecord::Tasks::DatabaseTasks.structure_dump(@configuration, filename)
   end
 end
@@ -191,7 +191,7 @@ class StructureLoadTaskTest < TaskTestBase
 
   def test_structure_load
     filename = "awesome-file.sql"
-    Kernel.expects(:system).with("fdbsqlcli --quiet --file #{filename} my_test_schema")
+    Kernel.expects(:system).with("fdbsqlload", "--quiet" , "--schema", "my_test_schema", filename).returns(true)
     ActiveRecord::Tasks::DatabaseTasks.structure_load(@configuration, filename)
   end
 end
